@@ -1,53 +1,33 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression # Regresión lineal
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score, mean_absolute_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score # Errores
+import seaborn as sns # Heatmap
+from sklearn.preprocessing import StandardScaler #scaler
 
 # Configuración de la Página
 st.set_page_config(page_title="Proyecto Final IA", layout="wide")
 
-# NOTA: Aquí iría su pd.read_csv('datos_reales.csv')
+# Leemos el dataset
+df = pd.read_csv('computer_prices_all.csv')
+df = df.select_dtypes(include=np.number) #Solo numericas
 
-# Generación de datos aleatorios (Precios de venta de casas)
-@st.cache_data
-def generar_datos():
-    np.random.seed(42)
-    n = 500
-    # Variables independientes
-    metros = np.random.randint(80, 400, n) # Casas de 80m2 a 400m2
-    habitaciones = np.random.randint(2, 7, n)
-    antiguedad = np.random.randint(0, 30, n)
-    zona_centro = np.random.randint(0, 2, n) 
-    
-    # Fórmula de precio de casas (MXN)
-    # Base: 1.5 Millones + 25k por m2 + 150k por cuarto - depreciación + plusvalía centro
-    precio_base = 1500000 
-    precio = precio_base + \
-             (metros * 25000) + \
-             (habitaciones * 150000) - \
-             (antiguedad * 15000) + \
-             (zona_centro * 1200000) + \
-             np.random.normal(0, 100000, n) # Ruido de +/- 300k
-    
-    df = pd.DataFrame({
-        'Metros_Cuadrados': metros,
-        'Habitaciones': habitaciones,
-        'Antiguedad_Anios': antiguedad,
-        'Zona_Centro': zona_centro,
-        'Precio_Venta': precio
-    })
-    return df
-
-df = generar_datos()
+#Limpia de datos y mapeo
+#[Pendiente]
 
 # Entrenamiento del modelo: Se entrena en vivo para el demo
-X = df[['Metros_Cuadrados', 'Habitaciones', 'Antiguedad_Anios', 'Zona_Centro']]
-y = df['Precio_Venta']
+X = df[['gpu_tier', 'cpu_tier', 'ram_gb']]
+y = df['price']
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-model = RandomForestRegressor(n_estimators=100, random_state=42)
+#Escalado
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+model = LinearRegression()
 model.fit(X_train, y_train)
 preds = model.predict(X_test)
 
@@ -64,13 +44,13 @@ opcion = st.sidebar.radio("Ir a:", ["1. Contexto y Problema",
 # ------------------------------------------------------------------
 # Sección 1. Contexto y Problema
 if opcion == "1. Contexto y Problema":
-    st.title("🏠 Estimador Inteligente de Precios Inmobiliarios")
+    st.title("Estimador Inteligente de Precios de computadoras")
     st.markdown("""
     ### El Problema
-    El mercado inmobiliario de la ciudad sufre de especulación. Los vendedores suelen fijar precios basándose en emociones / sentimientos y no en datos objetivos.
+    El mercado de las computadoras aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     
     ### La Solución
-    Un modelo de Machine Learning (Random Forest) que sugiere un precio justo basado en características físicas y ubicación, eliminando el sesgo humano.
+    Un modelo de Machine Learning (Regresion lineal) que sugiere un precio justo basado en características del equipo.
     """)
     
     st.info("Nota: Aquí podrían describir brevemente como limpiaron los datos")
@@ -84,15 +64,21 @@ elif opcion == "2. Análisis Exploratorio de Datos (EDA)":
     col1, col2 = st.columns(2)
     
     with col1:
-        st.subheader("Relación Tamaño vs Precio")
-        st.scatter_chart(data=df, x='Metros_Cuadrados', y='Precio_Venta', color="#3E0080") 
-        st.caption("Correlación positiva: A mayor metraje, mayor costo.")
+        st.subheader("Relación gpu_tier vs Precio")
+        st.scatter_chart(data=df, x='gpu_tier', y='price', color="#3E0080") 
+        st.caption("Correlación positiva: AAAAAAAAAAAAAAAAAAAA")
         
-    with col2:
-        st.subheader("Distribución por Zona")
-        conteo_zona = df['Zona_Centro'].value_counts().rename(index={0: 'Periferia', 1: 'Centro'})
+    '''with col2:
+        st.subheader("Distribución por cpu_tier")
+        conteo_zona = df['cpu_tier'].value_counts().rename(index={0: 'Periferia', 1: 'Centro'})
         st.bar_chart(conteo_zona, color="#FF8C0095")
         st.caption("Distribución de propiedades en el dataset.")
+    '''
+
+    with col2:
+        st.subheader("Relación cpu_tier vs Precio")
+        st.scatter_chart(data=df, x='cpu_tier', y='price', color="#3E0080") 
+        st.caption("Correlación positiva: AAAAAAAAAAAAAAAAAAAA")
 
 # ------------------------------------------------------------------
 # Sección 3. Evaluación del modelo
@@ -121,28 +107,34 @@ elif opcion == "4. Predicción en Vivo":
     # Inputs interactivos para el profesor/usuario
     col1, col2 = st.columns(2)
     with col1:
-        metros_input = st.slider("Metros Cuadrados", 50, 300, 120)
-        habitaciones_input = st.number_input("Número de Habitaciones", 1, 6, 3)
+        cpu_input = st.slider("Cpu tier", 1, 6, 2)
+        ram_input = st.number_input("Gp de ram", 4, 64, 16)
+
+    with col2:
+        gpu_input = st.slider("Gpu tier", 1, 6, 2)
     
+    '''
     with col2:
         antiguedad_input = st.slider("Antigüedad (Años)", 0, 50, 5)
         zona_input = st.selectbox("Ubicación", ["Periferia", "Centro"])
         zona_binaria = 1 if zona_input == "Centro" else 0
+    '''
 
     # Botón de predicción
     if st.button("Calcular Precio Justo", type="primary"):
         input_data = pd.DataFrame({
-            'Metros_Cuadrados': [metros_input],
-            'Habitaciones': [habitaciones_input],
-            'Antiguedad_Anios': [antiguedad_input],
-            'Zona_Centro': [zona_binaria]
+            'gpu_tier': [gpu_input],
+            'cpu_tier': [cpu_input],
+            'ram_gb': [ram_input],
         })
         
+        input_data = scaler.transform(input_data) #la escalamos antes de meterla al modelo
         prediccion = model.predict(input_data)[0]
         
         # Detalle visual del resultado
         st.success(f"💰 Precio Estimado: **${prediccion:,.2f} MXN**")
-        # Barra de progreso ajustada a una escala de 15 Millones
-        st.progress(int(min(prediccion / 15000000, 1.0) * 100))
+        
+        max_price = df['price'].max()
+        st.progress(int(min(prediccion / max_price, 1.0) * 100))
 
     # Para correr: streamlit run demo_clase.py
