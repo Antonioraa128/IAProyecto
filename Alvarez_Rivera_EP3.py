@@ -94,9 +94,11 @@ elif opcion == "3. Evaluación del Modelo":
     col3.metric("Test Set Size", len(y_test))
     
     st.subheader("Gráfica: Realidad vs. Predicción")
-    comparison_df = pd.DataFrame({'Real': y_test, 'Predicho': preds})
-    # Colores de alto contraste: Rojo y Azul
-    st.line_chart(comparison_df.head(30), color=["#FF0000", "#0000FF"])
+    # Alinear predicciones con el índice de y_test y ordenar para evitar saltos en la línea
+    preds_series = pd.Series(preds, index=y_test.index)
+    comparison_df = pd.DataFrame({'Real': y_test, 'Predicho': preds_series}).sort_index()
+    # Colores de alto contraste: Rojo (Real) y Azul (Predicho)
+    st.line_chart(comparison_df.head(30), color=["#FF0000", "#0000FF"], use_container_width=True)
 
 # ------------------------------------------------------------------
 # Sección 4. Predicción en vivo
