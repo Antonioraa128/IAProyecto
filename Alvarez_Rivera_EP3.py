@@ -69,7 +69,8 @@ if opcion == "1. Contexto y Problema":
     """)
     
     st.write("Vista previa del Dataset original:", pd.read_csv('computer_prices_all.csv').head())
-    st.write("Vista previa del Dataset procesado:", df.head())
+    st.write("Vista previa del Dataset procesado:", X.head())
+    st.info("Nota: Para la limpieza de datos se realizo un mapeo y dummies de ciertas variables categoricas para pasarlas a numericas.")
     
     # explicacion de las columnas del dataset procesado
     st.subheader("Descripción de las columnas del dataset procesado:")
@@ -88,7 +89,6 @@ if opcion == "1. Contexto y Problema":
     - `price`: Precio del dispositivo en USD.
     """)
     
-    st.info("Nota: Aquí podrían describir brevemente como limpiaron los datos")
 
 # ------------------------------------------------------------------
 # Sección 2. EDA
