@@ -3,6 +3,9 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression # Regresión lineal
+
+from sklearn.preprocessing import PolynomialFeatures
+
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score # Errores
 import seaborn as sns # Heatmap
@@ -42,9 +45,22 @@ scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
+'''
 model = LinearRegression()
 model.fit(X_train, y_train)
 preds = model.predict(X_test)
+'''
+poly = PolynomialFeatures(degree=5)  # Ajusta el grado según tus necesidades
+X_poly_train = poly.fit_transform(X_train)  # Ajuste y transformación de X_train
+X_poly_test = poly.transform(X_test)  # Transformación de X_test
+
+# Paso 2: Entrenar el modelo de regresión lineal sobre las características transformadas
+model_poly = LinearRegression()
+model_poly.fit(X_poly_train, y_train)
+
+# Paso 3: Realizar las predicciones
+preds = model_poly.predict(X_poly_test)
+
 
 # ------------------------------------------------------------------
 # Interfaz del Dashboard
@@ -96,9 +112,18 @@ elif opcion == "2. Análisis Exploratorio de Datos (EDA)":
     st.title("📊 Análisis Exploratorio de Datos")
     
     corr = df.corr()
-    st.write("Matriz de correlación (Heatmap):")
+    st.subheader("Matriz de correlación (Heatmap):")
     fig, ax = plt.subplots(figsize=(16, 12))
     sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm")
+    st.pyplot(fig)
+
+
+    st.subheader("Gráfica: Precios ordenados en el dataset original")
+    prices_sorted = df['price'].sort_values().reset_index(drop=True)
+    fig, ax = plt.subplots(figsize=(16, 12))
+    ax.scatter(prices_sorted.index, prices_sorted.values, color='blue', marker='o')
+    ax.set_xlabel('Index')
+    ax.set_ylabel('Price')
     st.pyplot(fig)
 
 # ------------------------------------------------------------------
