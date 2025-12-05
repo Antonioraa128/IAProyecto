@@ -1,3 +1,11 @@
+# Ejercicio: Proyecto Final
+# Autores:
+# -Antonio Rivera Aguirre #192238 ITC
+# -Jerónimo Alvarez Lozano #586266 ITC
+# Fecha: 05/12/2025
+# Materia: Inteligencia Artificial I
+
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -6,53 +14,65 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score # Errores
-import seaborn as sns # Heatmap
-from sklearn.preprocessing import StandardScaler #scaler
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+import seaborn as sns
+from sklearn.preprocessing import StandardScaler
 
 # Configuración de la Página
 st.set_page_config(page_title="Proyecto Final IA", layout="wide")
 
-# Leemos el dataset
-df = pd.read_csv('computer_prices_all.csv')
+# Funciones en cache para que no se usen cada ves que se mueve un parametro
+@st.cache_data
+def carga_datos():
+    # Leemos el dataset
+    df = pd.read_csv('computer_prices_all.csv')
 
-#Limpia de datos y mapeo
-#Mapeo de la variable device type, se vuelve binario si es laptop o no
-mapeo_type = {'Desktop': 0, 'Laptop': 1}
-df['device_type'] = df['device_type'].map(mapeo_type)
-df.head()
+    # Mapeo de la variable device type, se vuelve binario si es laptop o no
+    mapeo_type = {'Desktop': 0, 'Laptop': 1}
+    df['device_type'] = df['device_type'].map(mapeo_type)
 
-#Dummies de las variables categoricas para hacer columnas binarias
-df = pd.get_dummies(df, columns=['display_type'], prefix=['DT'], dtype=int)
-df.drop(columns=['DT_VA'], inplace=True) #Se quita para evitar redundancia
-df.head()
+    # Dummies de las variables categóricas para hacer columnas binarias
+    df = pd.get_dummies(df, columns=['display_type'], prefix=['DT'], dtype=int)
+    df.drop(columns=['DT_VA'], inplace=True) # Se quita para evitar redundancia
 
-#Dummies de las variables categoricas para hacer columnas binarias
-df = pd.get_dummies(df, columns=['gpu_brand'], prefix=['GPU'], dtype=int)
-df.drop(columns=['GPU_Intel'], inplace=True) #Se quita para evitar redundancia
-df.head()
+    df = pd.get_dummies(df, columns=['gpu_brand'], prefix=['GPU'], dtype=int)
+    df.drop(columns=['GPU_Intel'], inplace=True) # Se quita para evitar redundancia
 
-df = df.select_dtypes(include=np.number) #Dejamos solo las variables numericas
+    df = df.select_dtypes(include=np.number) # Deja solo las variables numéricas
 
-# Entrenamiento del modelo: Se entrena en vivo para el demo
-X = df[['cpu_cores','cpu_base_ghz', 'gpu_tier', 'GPU_Apple', 'GPU_NVIDIA', 'GPU_AMD', 'ram_gb', 'device_type', 'display_size_in',  'release_year', 'storage_gb', 'refresh_hz','DT_LED','DT_OLED' ,'DT_IPS', 'DT_QLED', 'DT_Mini-LED']]
-y = df['price']
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    return df
 
-#Escalado
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
 
-#Entrenamos el modelo polinomial grado 2
-pr = PolynomialFeatures(degree=2)
-model_pr = LinearRegression()
-Z_pr = pr.fit_transform(X_train)
-Input=[('scale',StandardScaler()),('polynomial', PolynomialFeatures(include_bias=False)),('model',LinearRegression())]
-pipe=Pipeline(Input)
-X_train =X_train.astype(float) #conversion de seguridad para evitar warning
-pipe.fit(X_train,y_train)
-preds = pipe.predict(X_test)
+@st.cache_data
+def entrenamiento(df):
+    # Entrenamiento del modelo: Se entrena en vivo para el demo
+    X = df[['cpu_cores', 'cpu_base_ghz', 'gpu_tier', 'GPU_Apple', 'GPU_NVIDIA', 'GPU_AMD', 'ram_gb', 'device_type', 
+            'display_size_in', 'release_year', 'storage_gb', 'refresh_hz', 'DT_LED', 'DT_OLED', 'DT_IPS', 'DT_QLED', 'DT_Mini-LED']]
+    y = df['price']
+    
+    # Division
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Escalado
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+
+    # Entrenamos el modelo polinomial grado 2
+    pr = PolynomialFeatures(degree=2)
+    model_pr = LinearRegression()
+    Z_pr = pr.fit_transform(X_train)
+    Input = [('scale', StandardScaler()), ('polynomial', PolynomialFeatures(include_bias=False)), ('model', LinearRegression())]
+    pipe = Pipeline(Input)
+    X_train = X_train.astype(float)
+    pipe.fit(X_train, y_train)
+    preds = pipe.predict(X_test)
+    
+    return pipe, X_test, y_test, preds, scaler, X
+
+# Cargar y procesar datos con las funciones del cache
+df = carga_datos()
+pipe, X_test, y_test, preds, scaler, X = entrenamiento(df)
 
 
 
@@ -70,6 +90,8 @@ opcion = st.sidebar.radio("Ir a:", ["1. Contexto y Problema",
 # Sección 1. Contexto y Problema
 if opcion == "1. Contexto y Problema":
     st.title("Predicción Inteligente de Precios de Computadoras")
+    st.write("Antonio Rivera Aguirre #192238 ITC")
+    st.write("Jerónimo Alvarez Lozano #586266 ITC")
     st.markdown("""
     ### El Problema
     En los últimos años, los precios de las computadoras y sus componentes han subido mucho. Esto ha hecho que sea difícil comprar y actualizar estos sistemas, sobre todo los de gama media y alta, para consumidores y empresas. Este problema ha evolucionado exponencialmente en estos últimos 5 años con la pandemia de COVID-19 y la alta demanda de estas tecnologías para el desarrollo de la inteligencia artificial. Con este rápido aumento de los precios, es difícil para los consumidores y empresas saber si están pagando un precio justo por las computadoras que compran.
@@ -82,7 +104,7 @@ if opcion == "1. Contexto y Problema":
     st.write("Vista previa del Dataset procesado:", X.head())
     st.info("Nota: Para la limpieza de datos se realizó un mapeo y dummies de ciertas variables categóricas para pasarlas a numéricas.")
     
-    # explicacion de las columnas del dataset procesado
+    # Explicacion de las columnas del dataset procesado
     st.subheader("Descripción de las columnas del dataset procesado:")
     st.markdown("""
     - `device_type`: Tipo de dispositivo (0 para Desktop, 1 para Laptop).
@@ -98,6 +120,8 @@ if opcion == "1. Contexto y Problema":
     - `GPU_Apple`, `GPU_NVIDIA`, `GPU_AMD`: Columnas binarias que indican la marca de la tarjeta gráfica.
     - `price`: Precio del dispositivo en USD.
     """)
+    st.subheader("Referencias:")
+    st.write("All computer prices. (2025, September 28). https://www.kaggle.com/datasets/paperxd/all-computer-prices/data")
     
 
 # ------------------------------------------------------------------
@@ -109,28 +133,28 @@ elif opcion == "2. Análisis Exploratorio de Datos (EDA)":
     col1, col2 = st.columns(2)
 
     with col1:
-        #Grafica de precios
+        # Grafica de precios
         st.subheader("Gráfica de precios ordenados")
         prices_sorted = df['price'].sort_values().reset_index(drop=True)
-        fig, ax = plt.subplots(figsize=(10, 8))
+        fig, ax = plt.subplots(figsize=(8, 6))
         ax.scatter(prices_sorted.index, prices_sorted.values, color='blue', marker='o')
         ax.set_xlabel('Index')
         ax.set_ylabel('Price')
         st.pyplot(fig)
 
     with col2:
-        #Tabla de valores nulos
+        # Tabla de valores nulos
         st.subheader("Tabla de valores nulos")
         st.write(pd.read_csv('computer_prices_all.csv').isnull().sum())
 
-    #Matriz correlacion
+    # Matriz correlacion
     corr = df.corr()
     st.subheader("Matriz de correlación:")
     fig, ax = plt.subplots(figsize=(16, 12))
     sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm")
     st.pyplot(fig)
 
-    #Matriz colinealidad
+    # Matriz colinealidad
     st.subheader("Matriz de correlación (Multicolinealidad)")
     target = "price"
     corr_target = df.corr()[target].drop(target)
@@ -168,13 +192,13 @@ elif opcion == "4. Predicción en Vivo":
     # Inputs interactivos para el profesor/usuario
     col1, col2, col3, col4 = st.columns(4)
 
-    #Cosas del CPU
+    # Cosas del CPU
     with col1:
         st.subheader("Características del CPU")
         cpu_ghz = st.number_input("CPU GHZ base", 2.0, 3.4, 2.6)
         cpu_cores = st.slider("CPU cores", 4, 26, 8)
 
-    #Cosas del GPU
+    # Cosas del GPU
     with col2:
         st.subheader("Características del GPU")
         gpu_brand_input = st.selectbox("Marca del GPU", ["Apple", "NVIDIA", "AMD", "Intel"])
@@ -184,7 +208,7 @@ elif opcion == "4. Predicción en Vivo":
         gpu_input = st.slider("GPU tier", 1, 6, 3)
 
     
-    #Otras cosas
+    # Cosas del monitor
     with col3:
         st.subheader("Características del Monitor")
         display_type_input = st.selectbox("Tipo de display", ["LED", "Mini-LED", "OLED", "QLED", "IPS", "VA"])
@@ -196,6 +220,7 @@ elif opcion == "4. Predicción en Vivo":
         size_input = st.number_input("Tamaño del display", 13.3, 34.0, 16.0)
         hz_input = st.slider("Hercios por segundo", 60, 240, 120)
 
+    # Otras cosas
     with col4:
         st.subheader("Otras características")
         device_input = st.selectbox("Dispositivo", ["Laptop", "Desktop"])
@@ -228,7 +253,7 @@ elif opcion == "4. Predicción en Vivo":
             'DT_Mini-LED': [mled_binaria]
         })
         
-        input_data = scaler.transform(input_data) #la escalamos antes de meterla al modelo
+        input_data = scaler.transform(input_data) # La escalamos antes de meterla al modelo
         prediccion = pipe.predict(input_data)[0]
         
         # Detalle visual del resultado
