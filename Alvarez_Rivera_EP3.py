@@ -2,10 +2,9 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression # Regresión lineal
-
+from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
-
+from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score # Errores
 import seaborn as sns # Heatmap
@@ -45,21 +44,16 @@ scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
-'''
-model = LinearRegression()
-model.fit(X_train, y_train)
-preds = model.predict(X_test)
-'''
-poly = PolynomialFeatures(degree=5)  # Ajusta el grado según tus necesidades
-X_poly_train = poly.fit_transform(X_train)  # Ajuste y transformación de X_train
-X_poly_test = poly.transform(X_test)  # Transformación de X_test
+#Entrenamos el modelo polinomial grado 2
+pr = PolynomialFeatures(degree=2)
+model_pr = LinearRegression()
+Z_pr = pr.fit_transform(X_train)
+Input=[('scale',StandardScaler()),('polynomial', PolynomialFeatures(include_bias=False)),('model',LinearRegression())]
+pipe=Pipeline(Input)
+X_train =X_train.astype(float) #conversion de seguridad para evitar warning
+pipe.fit(X_train,y_train)
+preds = pipe.predict(X_test)
 
-# Paso 2: Entrenar el modelo de regresión lineal sobre las características transformadas
-model_poly = LinearRegression()
-model_poly.fit(X_poly_train, y_train)
-
-# Paso 3: Realizar las predicciones
-preds = model_poly.predict(X_poly_test)
 
 
 # ------------------------------------------------------------------
@@ -111,21 +105,41 @@ if opcion == "1. Contexto y Problema":
 elif opcion == "2. Análisis Exploratorio de Datos (EDA)":
     st.title("📊 Análisis Exploratorio de Datos")
     
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        #Grafica de precios
+        st.subheader("Gráfica de precios ordenados")
+        prices_sorted = df['price'].sort_values().reset_index(drop=True)
+        fig, ax = plt.subplots(figsize=(10, 8))
+        ax.scatter(prices_sorted.index, prices_sorted.values, color='blue', marker='o')
+        ax.set_xlabel('Index')
+        ax.set_ylabel('Price')
+        st.pyplot(fig)
+
+    with col2:
+        #Tabla de valores nulos
+        st.subheader("Tabla de valores nulos")
+        st.write(pd.read_csv('computer_prices_all.csv').isnull().sum())
+
+    #Matriz correlacion
     corr = df.corr()
-    st.subheader("Matriz de correlación (Heatmap):")
+    st.subheader("Matriz de correlación:")
     fig, ax = plt.subplots(figsize=(16, 12))
     sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm")
     st.pyplot(fig)
 
-
-    st.subheader("Gráfica: Precios ordenados en el dataset original")
-    prices_sorted = df['price'].sort_values().reset_index(drop=True)
+    #Matriz colinealidad
+    st.subheader("Matriz de correlacion (Multicolinealidad)")
+    target = "price"
+    corr_target = df.corr()[target].drop(target)
+    top_corrs = corr_target.abs().sort_values(ascending=False).head(8)
+    top_corr = df[top_corrs.index].corr()
     fig, ax = plt.subplots(figsize=(16, 12))
-    ax.scatter(prices_sorted.index, prices_sorted.values, color='blue', marker='o')
-    ax.set_xlabel('Index')
-    ax.set_ylabel('Price')
+    sns.heatmap(top_corr, annot=True, fmt=".2f", cmap="coolwarm")
     st.pyplot(fig)
-
+    
 # ------------------------------------------------------------------
 # Sección 3. Evaluación del modelo
 elif opcion == "3. Evaluación del Modelo":
@@ -143,6 +157,7 @@ elif opcion == "3. Evaluación del Modelo":
     comparison_df = pd.DataFrame({'Real': y_test, 'Predicho': preds}).sort_index()
     # Colores de alto contraste: Rojo (Real) y Azul (Predicho)
     st.line_chart(comparison_df.head(30), color=["#FF0000", "#0000FF"], use_container_width=True)
+    st.info("Nota: Escojimos este modelo porque aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.")
 
 # ------------------------------------------------------------------
 # Sección 4. Predicción en vivo
@@ -156,30 +171,30 @@ elif opcion == "4. Predicción en Vivo":
     #Cosas del CPU
     with col1:
         st.subheader("Caracteristicas del CPU")
-        cpu_cores = st.slider("CPU cores", 4, 26, 8)
         cpu_ghz = st.number_input("CPU GHZ base", 2.0, 3.4, 2.6)
+        cpu_cores = st.slider("CPU cores", 4, 26, 8)
 
     #Cosas del GPU
     with col2:
         st.subheader("Caracteristicas del GPU")
-        gpu_input = st.slider("GPU tier", 1, 6, 3)
         gpu_brand_input = st.selectbox("Marca del GPU", ["Apple", "NVIDIA", "AMD", "Intel"])
         apple_binaria = 1 if gpu_brand_input == "Apple" else 0
         nvidia_binaria = 1 if gpu_brand_input == "NVIDIA" else 0
         amd_binaria = 1 if gpu_brand_input == "AMD" else 0
+        gpu_input = st.slider("GPU tier", 1, 6, 3)
 
     
     #Otras cosas
     with col3:
         st.subheader("Caracteristicas del Monitor")
-        size_input = st.number_input("Tamaño del display", 13.3, 34.0, 16.0)
-        hz_input = st.slider("Hercios por segundo", 60, 240, 120)
         display_type_input = st.selectbox("Tipo de display", ["LED", "Mini-LED", "OLED", "QLED", "IPS", "VA"])
         led_binaria = 1 if display_type_input == "LED" else 0
         mled_binaria = 1 if display_type_input == "Mini-LED" else 0
         oled_binaria = 1 if display_type_input == "OLED" else 0
         qled_binaria = 1 if display_type_input == "QLED" else 0
         ips_binaria = 1 if display_type_input == "IPS" else 0
+        size_input = st.number_input("Tamaño del display", 13.3, 34.0, 16.0)
+        hz_input = st.slider("Hercios por segundo", 60, 240, 120)
 
     with col4:
         st.subheader("Otras caracteristicas")
@@ -214,12 +229,10 @@ elif opcion == "4. Predicción en Vivo":
         })
         
         input_data = scaler.transform(input_data) #la escalamos antes de meterla al modelo
-        prediccion = model.predict(input_data)[0]
+        prediccion = pipe.predict(input_data)[0]
         
         # Detalle visual del resultado
         st.success(f"💰 Precio Estimado: **${prediccion:,.2f} USD**")
         
         max_price = df['price'].max()
         st.progress(int(min(prediccion / max_price, 1.0) * 100))
-
-    # Para correr: streamlit run demo_clase.py
