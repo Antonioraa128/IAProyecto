@@ -80,7 +80,7 @@ if opcion == "1. Contexto y Problema":
     
     st.write("Vista previa del Dataset original:", pd.read_csv('computer_prices_all.csv').head())
     st.write("Vista previa del Dataset procesado:", X.head())
-    st.info("Nota: Para la limpieza de datos se realizo un mapeo y dummies de ciertas variables categoricas para pasarlas a numericas.")
+    st.info("Nota: Para la limpieza de datos se realizó un mapeo y dummies de ciertas variables categóricas para pasarlas a numéricas.")
     
     # explicacion de las columnas del dataset procesado
     st.subheader("Descripción de las columnas del dataset procesado:")
@@ -131,7 +131,7 @@ elif opcion == "2. Análisis Exploratorio de Datos (EDA)":
     st.pyplot(fig)
 
     #Matriz colinealidad
-    st.subheader("Matriz de correlacion (Multicolinealidad)")
+    st.subheader("Matriz de correlación (Multicolinealidad)")
     target = "price"
     corr_target = df.corr()[target].drop(target)
     top_corrs = corr_target.abs().sort_values(ascending=False).head(8)
@@ -157,7 +157,7 @@ elif opcion == "3. Evaluación del Modelo":
     comparison_df = pd.DataFrame({'Real': y_test, 'Predicho': preds}).sort_index()
     # Colores de alto contraste: Rojo (Real) y Azul (Predicho)
     st.line_chart(comparison_df.head(30), color=["#FF0000", "#0000FF"], use_container_width=True)
-    st.info("Nota: Escojimos este modelo porque aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.")
+    st.info("Nota: Elegimos el modelo de regresión polinómica multivariada porque la gráfica de precios del conjunto de datos tenía una forma similar a la de una función de ese tipo. Decidimos hacerla de grado 2 debido a la cantidad de parámetros que usamos para hacer las predicciones.")
 
 # ------------------------------------------------------------------
 # Sección 4. Predicción en vivo
@@ -170,13 +170,13 @@ elif opcion == "4. Predicción en Vivo":
 
     #Cosas del CPU
     with col1:
-        st.subheader("Caracteristicas del CPU")
+        st.subheader("Características del CPU")
         cpu_ghz = st.number_input("CPU GHZ base", 2.0, 3.4, 2.6)
         cpu_cores = st.slider("CPU cores", 4, 26, 8)
 
     #Cosas del GPU
     with col2:
-        st.subheader("Caracteristicas del GPU")
+        st.subheader("Características del GPU")
         gpu_brand_input = st.selectbox("Marca del GPU", ["Apple", "NVIDIA", "AMD", "Intel"])
         apple_binaria = 1 if gpu_brand_input == "Apple" else 0
         nvidia_binaria = 1 if gpu_brand_input == "NVIDIA" else 0
@@ -186,7 +186,7 @@ elif opcion == "4. Predicción en Vivo":
     
     #Otras cosas
     with col3:
-        st.subheader("Caracteristicas del Monitor")
+        st.subheader("Características del Monitor")
         display_type_input = st.selectbox("Tipo de display", ["LED", "Mini-LED", "OLED", "QLED", "IPS", "VA"])
         led_binaria = 1 if display_type_input == "LED" else 0
         mled_binaria = 1 if display_type_input == "Mini-LED" else 0
@@ -197,11 +197,11 @@ elif opcion == "4. Predicción en Vivo":
         hz_input = st.slider("Hercios por segundo", 60, 240, 120)
 
     with col4:
-        st.subheader("Otras caracteristicas")
+        st.subheader("Otras características")
         device_input = st.selectbox("Dispositivo", ["Laptop", "Desktop"])
         year_input = st.slider("Año del dispositivo", 2018, 2025, 2022)
         device_binaria = 1 if device_input == "Laptop" else 0
-        ram_input = st.slider("Gb de ram", 8, 144, 32)
+        ram_input = st.slider("GB de RAM", 8, 144, 32)
         storage_input = st.slider("Almacenamiento", 256, 4096, 512)
 
 
